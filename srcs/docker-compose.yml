@@ -1,1 +1,11 @@
+services:
+  mariadb:
+    build:
+      context: ./requirements/mariadb
+    container_name: mariadb
+    networks:
+      - inception_net
 
+networks:
+  inception_net:
+    driver: bridge
