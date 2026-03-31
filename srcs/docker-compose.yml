@@ -3,8 +3,61 @@ services:
     build:
       context: ./requirements/mariadb
     container_name: mariadb
+    image: mariadb:inception
+    restart: always
+    env_file:
+      - .env
+    volumes:
+      - mariadb_data:/var/lib/mysql
     networks:
       - inception_net
+
+  wordpress:
+    build:
+      context: ./requirements/wordpress
+    container_name: wordpress
+    image: wordpress:inception
+    depends_on:
+      - mariadb
+    restart: always
+    env_file:
+      - .env
+    volumes:
+      - wordpress_data:/var/www/html
+    networks:
+      - inception_net
+
+  nginx:
+    build:
+      context: ./requirements/nginx
+    container_name: nginx
+    image: nginx:inception
+    depends_on:
+      - wordpress
+    restart: always
+    env_file:
+      - .env
+    volumes:
+      - wordpress_data:/var/www/html
+    ports:
+      - 443:443
+    networks:
+      - inception_net
+
+volumes:
+  mariadb_data:
+    driver: local
+    driver_opts:
+      type: none
+      device: /home/abaldelo/data/mysql
+      o: bind
+
+  wordpress_data:
+    driver: local
+    driver_opts:
+      type: none
+      device: /home/abaldelo/data/wordpress
+      o: bind
 
 networks:
   inception_net:
