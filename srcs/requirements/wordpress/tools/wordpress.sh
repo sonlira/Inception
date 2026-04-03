@@ -6,7 +6,7 @@ ITER=0
 
 echo "Checking MariaDB connection..."
 
-while ! mariadb -h mariadb -u "$MYSQL_USER" -p"$MYSQL_PASSWORD" -e "SELECT 1;" > /dev/null 2>&1; do
+while ! mariadb -h mariadb -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" -e "SELECT 1;" > /dev/null 2>&1; do
 	ITER=$((ITER + 1))
 	if [ $ITER -eq $MAX_RETRIES ]; then
 		echo "Error: MariaDB did not respond after $MAX_RETRIES attempts. Aborting."
