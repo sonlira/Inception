@@ -32,11 +32,7 @@ services:
       context: ./requirements/nginx
     container_name: nginx
     image: nginx:inception
-    depends_on:
-      - wordpress
     restart: always
-    env_file:
-      - .env
     volumes:
       - wordpress_data:/var/www/html
     ports:

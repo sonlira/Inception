@@ -18,13 +18,7 @@ while ! mariadb -h mariadb -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" -e "SELECT 1;" > 
 done
 echo "Connection established successfully."
 
-cd /var/www/html
-
-wget https://raw.githubusercontent.com/wp-cli/builds/med/phar/wp-cli.phar
-chmod +x wp-cli.phar
-mv wp-cli.phar /usr/local/bin/wp
-
-if [ ! -f "wp-config.php" ]; then
+if [ ! -f ./wp-config.php ]; then
 
 	wp core download --allow-root
 
@@ -32,21 +26,25 @@ if [ ! -f "wp-config.php" ]; then
 		--dbname=$MYSQL_DATABASE \
 		--dbuser=$MYSQL_USER \
 		--dbpass=$MYSQL_PASSWORD \
-		--dbhost=mariadb:3306 --allow-root
+		--dbhost=$MYSQL_HOSTNAME \
+		--allow-root
 	
 	wp core install \
-		--url=$DOMAIN_NAME \
-		--title=$SITE_TITLE \
-		--admin_user=$ADMIN_USER \
-		--admin_password=$ADMIN_PASSWORD \
-		--admin_email=$ADMIN_EMAIL --allow-root
+		--url="https://${DOMAIN_NAME}" \
+		--title="$WP_SITE_TITLE" \
+		--admin_user=$WP_ADMIN_USER \
+		--admin_password=$WP_ADMIN_PASSWORD \
+		--admin_email=$WP_ADMIN_EMAIL \
+		--skip-email \
+		--allow-root
 	
-	wp user create $USER_LOGIN $USER_EMAIL --role=author --user_pass=$USER_PASSWORD --allow-root
+	wp user create $WP_USER_LOGIN $WP_USER_EMAIL \
+		--role=author \
+		--user_pass=$WP_USER_PASSWORD \
+		--allow-root
 	
+	wp theme install twentysixteen --activate --allow-root
+
 fi
-
-sed -i 's/listen = \/run\/php\/php8.2-fpm.sock/listen = 9000/g' /etc/php/8.2/fpm/pool.d/www.conf
-
-mkdir -p /run/php
 
 exec php-fpm8.2 -F

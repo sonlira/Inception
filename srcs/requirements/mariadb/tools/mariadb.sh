@@ -1,22 +1,14 @@
 #!/bin/bash
-set -e
 
-mkdir -p /run/mysqld
-chown -R mysql:mysql /run/mysqld
+service mysql start
 
-if [ ! -d "/var/lib/mysql/mysql" ]; then
+if [ ! -d /var/lib/mysql/${MYSQL_DATABASE} ]; then
 
-	mysql_install_db --user=mysql --datadir=/var/lib/mysql
-	mysql --user=mysql --bootstrap << EOF
-USE mysql;
-FLUSH PRIVILEGES;
-ALTER USER 'root'@'localhost' IDENTIFIED BY '$MYSQL_ROOT_PASSWORD';
-CREATE DATABASE IF NOT EXISTS $MYSQL_DATABASE;
-CREATE USER IF NOT EXISTS '$MYSQL_USER'@'%' IDENTIFIED BY '$MYSQL_PASSWORD';
-GRANT ALL PRIVILEGES ON $MYSQL_DATABASE.* TO '$MYSQL_USER'@'%';
-
-FLUSH PRIVILEGES;
-EOF
+	mysql -u ${MYSQL_ROOT_USER} -p${MYSQL_ROOT_PASSWORD} -e "CREATE DATABASE $MYSQL_DATABASE;"
+	mysql -e "CREATE USER '$MYSQL_USER'@'%' IDENTIFIED BY '$MYSQL_PASSWORD'"
+	mysql -e "GRANT ALL ON $MYSQL_DATABASE.* TO '$MYSQL_USER'@'%' IDENTIFIED BY '$MYSQL_PASSWORD' WITH GRANT OPTION;"
+	mysql -e "FLUSH PRIVILEGES;"
+	mysql -e "ALTER USER '${MYSQL_ROOT_USER}'@'localhost' IDENTIFIED BY '${MYSQL_ROOT_PASSWORD}';"
 fi
-
-exec mysqld --user=mysql
+mysqladmin -u ${MYSQL_ROOT_USER} --password=${MYSQL_ROOT_PASSWORD} shutdown
+exec mysqld
