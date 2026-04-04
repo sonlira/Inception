@@ -1,14 +1,25 @@
 #!/bin/bash
 
-service mysql start
+mkdir -p /run/mysqld && chown -R mysql:mysql /run/mysqld
+chown -R mysql:mysql /var/lib/mysql
 
-if [ ! -d /var/lib/mysql/${MYSQL_DATABASE} ]; then
-
-	mysql -u ${MYSQL_ROOT_USER} -p${MYSQL_ROOT_PASSWORD} -e "CREATE DATABASE $MYSQL_DATABASE;"
-	mysql -e "CREATE USER '$MYSQL_USER'@'%' IDENTIFIED BY '$MYSQL_PASSWORD'"
-	mysql -e "GRANT ALL ON $MYSQL_DATABASE.* TO '$MYSQL_USER'@'%' IDENTIFIED BY '$MYSQL_PASSWORD' WITH GRANT OPTION;"
-	mysql -e "FLUSH PRIVILEGES;"
-	mysql -e "ALTER USER '${MYSQL_ROOT_USER}'@'localhost' IDENTIFIED BY '${MYSQL_ROOT_PASSWORD}';"
+if [ ! -d "/var/lib/mysql/mysql" ]; then
+    echo "Instalando base de datos inicial..."
+    mysql_install_db --user=mysql --basedir=/usr --datadir=/var/lib/mysql
 fi
-mysqladmin -u ${MYSQL_ROOT_USER} --password=${MYSQL_ROOT_PASSWORD} shutdown
-exec mysqld
+
+service mariadb start
+sleep 2
+
+if [ ! -d "/var/lib/mysql/${MYSQL_DATABASE}" ]; then
+    echo "Configurando credenciales..."
+    mysql -u root -e "CREATE DATABASE IF NOT EXISTS \`${MYSQL_DATABASE}\`;"
+    mysql -u root -e "CREATE USER IF NOT EXISTS '${MYSQL_USER}'@'%' IDENTIFIED BY '${MYSQL_PASSWORD}';"
+    mysql -u root -e "GRANT ALL PRIVILEGES ON \`${MYSQL_DATABASE}\`.* TO '${MYSQL_USER}'@'%';"
+    mysql -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '${MYSQL_ROOT_PASSWORD}';"
+    mysql -u root -p"${MYSQL_ROOT_PASSWORD}" -e "FLUSH PRIVILEGES;"
+fi
+
+mysqladmin -u root -p"${MYSQL_ROOT_PASSWORD}" shutdown
+
+exec mysqld --user=mysql
