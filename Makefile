@@ -1,19 +1,24 @@
 NAME = inception
 COMPOSE = docker compose -f srcs/docker-compose.yml -p $(NAME)
 HOST = abaldelo
+DATA_PATH = /home/$(HOST)/data
 
 all:
+	@mkdir -p $(DATA_PATH)/mysql
+	@mkdir -p $(DATA_PATH)/wordpress
 	@$(COMPOSE) up -d --build
 
 down:
 	@$(COMPOSE) down
 
 clean:
-	@rm -rf /home/$(HOST)/data/mysql/*
-	@rm -rf /home/$(HOST)/data/wordpress/*
-	$(COMPOSE) down --rmi all
+	@$(COMPOSE) down --rmi all
+	@sudo rm -rf $(DATA_PATH)/mysql/*
+	@sudo rm -rf $(DATA_PATH)/wordpress/*
 
 fclean: clean
-	$(COMPOSE) down -v
+	@$(COMPOSE) down -v --rmi all --remove-orphans
 
-.PHONY: all build down ru clean fclean
+re: fclean all
+
+.PHONY: all down clean fclean re
